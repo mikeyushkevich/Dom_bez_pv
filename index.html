@@ -201,6 +201,10 @@
       <label for="taxPercent">Налог с суммы завышения<span class="hint">%, зашивается в кредит</span></label>
       <div class="input-wrap"><input type="text" id="taxPercent" inputmode="decimal" value="20"></div>
     </div>
+    <div class="field">
+      <label for="ownFunds">Собственные средства клиента<span class="hint">0 — если денег нет совсем</span></label>
+      <div class="input-wrap"><input type="text" id="ownFunds" inputmode="numeric" value="0"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -222,20 +226,37 @@
       <div class="rvalue" id="outTax">—</div>
     </div>
     <div class="result-row muted">
-      <div class="rlabel">Формальный ПВ по документам<span class="note">фактически деньгами не вносится</span></div>
+      <div class="rlabel">Формальный ПВ по документам<span class="note">общая сумма, показанная банку</span></div>
       <div class="rvalue" id="outFormalPV">—</div>
+    </div>
+    <div class="result-row muted">
+      <div class="rlabel">— из них реальные деньги клиента<span class="note">фактически внесённая часть</span></div>
+      <div class="rvalue" id="outClientUsed">—</div>
+    </div>
+    <div class="result-row muted">
+      <div class="rlabel">— из них добавляет компания<span class="note">компенсирует нехватку ПВ</span></div>
+      <div class="rvalue" id="outCompanyAdds">—</div>
+    </div>
+    <div class="result-row muted">
+      <div class="rlabel">Неиспользованный остаток у клиента<span class="note">если денег больше, чем нужно на ПВ</span></div>
+      <div class="rvalue" id="outLeftover">—</div>
     </div>
     <div class="check" id="checkRow"></div>
   </div>
 
-  <div class="formula">Налог берётся с завышения, а не с полной цены, поэтому расчёт напрямую не сходится: завышение → налог → кредит → снова завышение. Уравнение решает это одним шагом:
+  <div class="formula">Если своих денег нет — весь ПВ фиктивный, и налог с завышения тоже нужно зашить в кредит:
 
-<b>(1 − ПВ) × D = R + t × (D − R)</b>
+<b>(1 − ПВ) × D = R + t × (D − R)
+D = R × (1 − t) / ((1 − ПВ) − t)</b>
 
-D — итоговая цена сделки, R — реальная цена дома,
-ПВ — первоначальный взнос банка, t — налог с завышения.
+Если у клиента есть свои деньги S — они напрямую уменьшают то, что нужно «добыть» через завышение:
 
-Отсюда: <b>D = R × (1 − t) / ((1 − ПВ) − t)</b></div>
+<b>(1 − ПВ) × D + S = R + t × (D − R)
+D = (R × (1 − t) − S) / ((1 − ПВ) − t)</b>
+
+Если S больше стандартного ПВ без завышения (R × ПВ) — завышение не нужно вовсе: D = R, кредит = (1 − ПВ) × R, компания ничего не добавляет.
+
+D — итоговая цена сделки, R — реальная цена дома, ПВ — первоначальный взнос банка, t — налог с завышения, S — собственные средства клиента.</div>
 
   <footer>mikeyushkevich · калькулятор сделки без ПВ</footer>
 </div>
@@ -259,23 +280,29 @@ function fmtInputNumber(str){
 const realPriceEl = document.getElementById('realPrice');
 const pvEl = document.getElementById('pvPercent');
 const taxEl = document.getElementById('taxPercent');
+const ownFundsEl = document.getElementById('ownFunds');
 
 function calculate(){
   const R = parseNum(realPriceEl.value);
   const p = parseNum(pvEl.value) / 100;
   const t = parseNum(taxEl.value) / 100;
+  const S = parseNum(ownFundsEl.value) || 0;
 
   const outDeal = document.getElementById('outDeal');
   const outLoan = document.getElementById('outLoan');
   const outMarkup = document.getElementById('outMarkup');
   const outTax = document.getElementById('outTax');
   const outFormalPV = document.getElementById('outFormalPV');
+  const outClientUsed = document.getElementById('outClientUsed');
+  const outCompanyAdds = document.getElementById('outCompanyAdds');
+  const outLeftover = document.getElementById('outLeftover');
   const checkRow = document.getElementById('checkRow');
 
+  const allOut = [outDeal, outLoan, outMarkup, outTax, outFormalPV, outClientUsed, outCompanyAdds, outLeftover];
   const denom = (1 - p) - t;
 
   if(!isFinite(R) || !isFinite(p) || !isFinite(t) || R <= 0 || denom <= 0){
-    [outDeal, outLoan, outMarkup, outTax, outFormalPV].forEach(el => el.textContent = '—');
+    allOut.forEach(el => el.textContent = '—');
     checkRow.textContent = denom <= 0
       ? 'Схема не работает: (1 − ПВ) должно быть больше налога, иначе кредит никогда не покроет завышение.'
       : '';
@@ -283,27 +310,41 @@ function calculate(){
     return;
   }
 
-  const D = R * (1 - t) / denom;
+  const standardPV = R * p; // ПВ без завышения, если бы S его полностью хватило
+
+  let D;
+  if(S >= standardPV){
+    D = R; // своих денег достаточно, завышение не требуется
+  } else {
+    D = (R * (1 - t) - S) / denom;
+  }
+
   const loan = D * (1 - p);
   const markup = D - R;
   const tax = markup * t;
   const formalPV = D * p;
-  const diff = loan - (R + tax);
+  const clientUsed = Math.min(S, formalPV);
+  const companyAdds = Math.max(formalPV - S, 0);
+  const leftover = Math.max(S - formalPV, 0);
+  const diff = loan + clientUsed - (R + tax);
 
   outDeal.textContent = fmtRub(D);
   outLoan.textContent = fmtRub(loan);
   outMarkup.textContent = fmtRub(markup);
   outTax.textContent = fmtRub(tax);
   outFormalPV.textContent = fmtRub(formalPV);
+  outClientUsed.textContent = fmtRub(clientUsed);
+  outCompanyAdds.textContent = fmtRub(companyAdds);
+  outLeftover.textContent = fmtRub(leftover);
 
-  checkRow.textContent = 'проверка: кредит − (реальная цена + налог) = ' + fmtRub(diff);
+  checkRow.textContent = 'проверка: кредит + средства клиента − (реальная цена + налог) = ' + fmtRub(diff);
   checkRow.className = Math.abs(diff) < 1 ? 'check ok' : 'check bad';
 }
 
-[realPriceEl, pvEl, taxEl].forEach(el=>{
+[realPriceEl, pvEl, taxEl, ownFundsEl].forEach(el=>{
   el.addEventListener('input', calculate);
   el.addEventListener('blur', ()=>{
-    if(el === realPriceEl){ el.value = fmtInputNumber(el.value); }
+    if(el === realPriceEl || el === ownFundsEl){ el.value = fmtInputNumber(el.value); }
   });
 });
 
