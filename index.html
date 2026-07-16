@@ -155,6 +155,7 @@
     <div class="result-line"><span>Первоначальный взнос банку</span><span class="val" id="dpFinal">—</span></div>
     <div class="result-line"><span>Сумма завышения цены</span><span class="val" id="markupFinal">—</span></div>
     <div class="result-line"><span>Налог к уплате</span><span class="val" id="taxFinal">—</span></div>
+    <div class="result-line big"><span>Компания должна дать клиенту на ПВ</span><span class="val" id="companyGives">—</span></div>
     <div class="result-line"><span>Требуемый минимальный кредит (справочно)</span><span class="val" id="lReq">—</span></div>
     <div id="statusBox" class="status-box status-neutral">Введите желаемую сумму кредита выше нуля, чтобы увидеть проверку.</div>
     <p class="note">Модель: разница между заявленной и реальной ценой (за вычетом налога) возвращается покупателю и покрывает первоначальный взнос сверх собственных средств клиента. Если собственных средств хватает на ПВ (20,1% от реальной цены дома+земли), завышение и налог не применяются — они не могут быть отрицательными.<br>
@@ -195,18 +196,18 @@ function calc(){
   }
 
   let dFinal, lFinal;
-  if (enoughOwnFunds){
-    dFinal = R;
-  } else if (loanInput === 0){
+  if (loanInput === 0){
     dFinal = dReq;
+    lFinal = lReq;
   } else {
     dFinal = loanInput / (1 - pv);
+    lFinal = loanInput;
   }
-  lFinal = (loanInput === 0) ? lReq : loanInput;
 
   const dpFinal = pv * dFinal;
   const markupFinal = Math.max(dFinal - R, 0);
   const taxFinal = t * markupFinal;
+  const companyGives = Math.max(dpFinal - F, 0);
 
   document.getElementById('rTotal').textContent = fmt(R);
   document.getElementById('dFinal').textContent = fmt(dFinal);
@@ -214,6 +215,7 @@ function calc(){
   document.getElementById('dpFinal').textContent = fmt(dpFinal);
   document.getElementById('markupFinal').textContent = fmt(markupFinal);
   document.getElementById('taxFinal').textContent = fmt(taxFinal);
+  document.getElementById('companyGives').textContent = fmt(companyGives);
   document.getElementById('lReq').textContent = fmt(lReq);
 
   const box = document.getElementById('statusBox');
