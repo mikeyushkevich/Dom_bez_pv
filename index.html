@@ -3,352 +3,239 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Калькулятор цены и кредита без ПВ</title>
+<title>Калькулятор кредита без первоначального взноса</title>
 <style>
   :root{
-    --paper:#f6f2ea;
-    --paper-line:#d8cfba;
-    --ink:#1f2a24;
-    --ink-soft:#5b6459;
-    --accent:#7a4d2b;
-    --accent-2:#2f4d3a;
-    --result-bg:#fffdf7;
-    --danger:#8a2e2e;
+    --blue-dark:#1F4E78;
+    --blue:#2E75B6;
+    --bg:#f4f6f9;
+    --card:#ffffff;
+    --input-bg:#fffbe0;
+    --result-bg:#e7f4ea;
+    --good:#1e7e34;
+    --bad:#c0392b;
+    --text:#22293a;
+    --muted:#6b7280;
+    --border:#e2e5eb;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
   body{
-    background:var(--paper);
-    background-image:
-      repeating-linear-gradient(180deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 32px);
-    color:var(--ink);
-    font-family: "Georgia", "Times New Roman", serif;
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    padding:48px 20px 80px;
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px 16px 60px;
   }
-  .sheet{
-    width:100%;
-    max-width:760px;
+  .wrap{max-width:760px;margin:0 auto;}
+  header{
+    background:linear-gradient(135deg,var(--blue-dark),var(--blue));
+    color:#fff;
+    padding:22px 24px;
+    border-radius:14px;
+    margin-bottom:20px;
   }
-  .eyebrow{
-    font-family: "Courier New", monospace;
-    font-size:12px;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    color:var(--accent);
-    border-bottom:1px solid var(--paper-line);
-    padding-bottom:10px;
-    margin-bottom:6px;
-  }
-  h1{
-    font-size:clamp(26px,4vw,34px);
-    font-weight:400;
-    margin:0 0 4px;
-    line-height:1.25;
-  }
-  .sub{
-    color:var(--ink-soft);
-    font-size:15px;
-    margin:0 0 34px;
-    max-width:58ch;
-    line-height:1.5;
-  }
+  header h1{margin:0 0 6px;font-size:20px;}
+  header p{margin:0;font-size:13px;opacity:.85;}
   .card{
-    background:var(--result-bg);
-    border:1px solid var(--paper-line);
-    box-shadow:0 1px 0 var(--paper-line), 0 8px 24px -18px rgba(0,0,0,0.4);
-    padding:28px clamp(18px,4vw,36px) 8px;
-    margin-bottom:28px;
+    background:var(--card);
+    border-radius:14px;
+    padding:20px 22px;
+    margin-bottom:18px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+    border:1px solid var(--border);
   }
   .card h2{
-    font-family:"Courier New", monospace;
-    font-size:12px;
-    letter-spacing:0.12em;
+    font-size:14px;
     text-transform:uppercase;
-    color:var(--accent-2);
-    font-weight:700;
-    margin:0 0 18px;
+    letter-spacing:.04em;
+    color:var(--blue-dark);
+    margin:0 0 14px;
+    padding-bottom:8px;
+    border-bottom:2px solid var(--blue);
   }
-  .field{
-    display:grid;
-    grid-template-columns: 1fr 190px;
-    align-items:center;
-    gap:16px;
-    padding:14px 0;
-    border-bottom:1px dashed var(--paper-line);
-  }
-  .field:last-child{border-bottom:none;}
+  .field{margin-bottom:14px;}
   .field label{
-    font-size:15px;
-    line-height:1.4;
-    color:var(--ink);
-  }
-  .field .hint{
     display:block;
-    font-family:"Courier New", monospace;
-    font-size:11px;
-    color:var(--ink-soft);
-    margin-top:3px;
-    letter-spacing:0.02em;
-  }
-  .input-wrap{
-    position:relative;
-  }
-  input[type=text]{
-    width:100%;
-    font-family:"Courier New", monospace;
-    font-size:16px;
-    text-align:right;
-    padding:9px 10px;
-    border:1px solid var(--paper-line);
-    background:#fff;
-    color:var(--ink);
-    outline:none;
-  }
-  input[type=text]:focus{
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px rgba(122,77,43,0.12);
-  }
-  .result-row{
-    display:grid;
-    grid-template-columns: 1fr 190px;
-    align-items:baseline;
-    gap:16px;
-    padding:15px 0;
-    border-bottom:1px dashed var(--paper-line);
-  }
-  .result-row:last-child{border-bottom:none;}
-  .result-row .rlabel{
-    font-size:15px;
-    line-height:1.4;
-  }
-  .result-row .rlabel .note{
-    display:block;
-    font-size:12px;
-    color:var(--ink-soft);
-    margin-top:2px;
-  }
-  .result-row .rvalue{
-    font-family:"Courier New", monospace;
-    font-size:19px;
-    text-align:right;
-    font-weight:700;
-  }
-  .result-row.primary .rvalue{
-    font-size:23px;
-    color:var(--accent-2);
-  }
-  .result-row.muted .rvalue{
-    font-weight:400;
-    color:var(--ink-soft);
-    font-size:16px;
-  }
-  .formula{
-    font-family:"Courier New", monospace;
     font-size:13px;
-    color:var(--ink-soft);
-    background:#efe9db;
-    border-left:3px solid var(--accent);
-    padding:14px 16px;
-    margin:0 0 28px;
-    line-height:1.7;
-    white-space:pre-wrap;
+    color:var(--muted);
+    margin-bottom:5px;
   }
-  .formula b{color:var(--ink);}
-  .check{
-    font-family:"Courier New", monospace;
-    font-size:12px;
-    color:var(--ink-soft);
-    text-align:right;
-    padding:10px 0 22px;
+  .field input{
+    width:100%;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--input-bg);
+    font-size:15px;
+    font-weight:600;
+    color:#1a3d6d;
   }
-  .check.ok{color:var(--accent-2);}
-  .check.bad{color:var(--danger);}
-  footer{
-    text-align:center;
-    font-size:12px;
-    color:var(--ink-soft);
-    font-family:"Courier New", monospace;
+  .field input:focus{outline:2px solid var(--blue);}
+  .hint{font-size:11px;color:var(--muted);margin-top:3px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:520px){.row2{grid-template-columns:1fr;}}
+  .results{background:var(--result-bg);}
+  .result-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:9px 0;
+    border-bottom:1px dashed rgba(0,0,0,.08);
+    font-size:14px;
+  }
+  .result-line:last-child{border-bottom:none;}
+  .result-line .val{font-weight:700;font-size:15px;}
+  .result-line.big .val{font-size:20px;color:var(--blue-dark);}
+  .status-box{
     margin-top:12px;
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
   }
-  @media (max-width:520px){
-    .field, .result-row{grid-template-columns:1fr;}
-    .field .input-wrap, .result-row .rvalue{text-align:left;}
-    input[type=text]{text-align:left;}
+  .status-ok{background:#d4f3dd;color:var(--good);}
+  .status-bad{background:#fbdcd6;color:var(--bad);}
+  .status-neutral{background:#eef1f6;color:var(--muted);font-weight:500;}
+  .note{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.5;
+    margin-top:6px;
   }
+  footer{text-align:center;font-size:11px;color:var(--muted);margin-top:20px;}
 </style>
 </head>
 <body>
-<div class="sheet">
-
-  <div class="eyebrow">Расчёт сделки</div>
-  <h1>Цена и кредит без первоначального взноса</h1>
-  <p class="sub">Реальная цена дома завышается в договоре так, чтобы кредит банка (79,9% от цены сделки) целиком покрыл и реальную цену продавцу, и налог с суммы завышения.</p>
+<div class="wrap">
+  <header>
+    <h1>Калькулятор кредита без первоначального взноса</h1>
+    <p>Расчёт завышения цены сделки, налога и суммы кредита при покупке дома и участка</p>
+  </header>
 
   <div class="card">
     <h2>Исходные данные</h2>
-    <div class="field">
-      <label for="realPrice">Реальная цена дома<span class="hint">то, что должен получить продавец</span></label>
-      <div class="input-wrap"><input type="text" id="realPrice" inputmode="numeric" value="4 471 000"></div>
+    <div class="row2">
+      <div class="field">
+        <label for="realHouse">Реальная цена дома, ₽</label>
+        <input type="number" id="realHouse" value="4471000" min="0" step="1000">
+      </div>
+      <div class="field">
+        <label for="realLand">Реальная цена земельного участка, ₽</label>
+        <input type="number" id="realLand" value="0" min="0" step="1000">
+      </div>
     </div>
-    <div class="field">
-      <label for="pvPercent">Первоначальный взнос банка<span class="hint">% от итоговой цены сделки</span></label>
-      <div class="input-wrap"><input type="text" id="pvPercent" inputmode="decimal" value="20,1"></div>
+    <div class="row2">
+      <div class="field">
+        <label for="pv">Первоначальный взнос банка, %</label>
+        <input type="number" id="pv" value="20.1" min="0" max="99" step="0.1">
+      </div>
+      <div class="field">
+        <label for="tax">Налог с суммы завышения, %</label>
+        <input type="number" id="tax" value="20" min="0" max="99" step="0.1">
+      </div>
     </div>
-    <div class="field">
-      <label for="taxPercent">Налог с суммы завышения<span class="hint">%, зашивается в кредит</span></label>
-      <div class="input-wrap"><input type="text" id="taxPercent" inputmode="decimal" value="20"></div>
-    </div>
-    <div class="field">
-      <label for="ownFunds">Собственные средства клиента<span class="hint">0 — если денег нет совсем</span></label>
-      <div class="input-wrap"><input type="text" id="ownFunds" inputmode="numeric" value="0"></div>
+    <div class="row2">
+      <div class="field">
+        <label for="ownFunds">Собственные средства клиента, ₽</label>
+        <input type="number" id="ownFunds" value="0" min="0" step="1000">
+      </div>
+      <div class="field">
+        <label for="loanInput">Желаемая сумма кредита, ₽</label>
+        <input type="number" id="loanInput" value="0" min="0" step="1000">
+        <div class="hint">0 — рассчитать автоматически. Если указать сумму, калькулятор проверит, хватает ли её.</div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card results">
     <h2>Результат</h2>
-    <div class="result-row primary">
-      <div class="rlabel">Итоговая цена сделки<span class="note">указывается в договоре</span></div>
-      <div class="rvalue" id="outDeal">—</div>
-    </div>
-    <div class="result-row primary">
-      <div class="rlabel">Сумма кредита<span class="note">выдаёт банк</span></div>
-      <div class="rvalue" id="outLoan">—</div>
-    </div>
-    <div class="result-row">
-      <div class="rlabel">Завышение цены<span class="note">итоговая цена минус реальная</span></div>
-      <div class="rvalue" id="outMarkup">—</div>
-    </div>
-    <div class="result-row">
-      <div class="rlabel">Налог с завышения<span class="note">включён в сумму кредита</span></div>
-      <div class="rvalue" id="outTax">—</div>
-    </div>
-    <div class="result-row muted">
-      <div class="rlabel">Формальный ПВ по документам<span class="note">общая сумма, показанная банку</span></div>
-      <div class="rvalue" id="outFormalPV">—</div>
-    </div>
-    <div class="result-row muted">
-      <div class="rlabel">— из них реальные деньги клиента<span class="note">фактически внесённая часть</span></div>
-      <div class="rvalue" id="outClientUsed">—</div>
-    </div>
-    <div class="result-row muted">
-      <div class="rlabel">— из них добавляет компания<span class="note">компенсирует нехватку ПВ</span></div>
-      <div class="rvalue" id="outCompanyAdds">—</div>
-    </div>
-    <div class="result-row muted">
-      <div class="rlabel">Неиспользованный остаток у клиента<span class="note">если денег больше, чем нужно на ПВ</span></div>
-      <div class="rvalue" id="outLeftover">—</div>
-    </div>
-    <div class="check" id="checkRow"></div>
+    <div class="result-line"><span>Общая реальная цена (дом + земля)</span><span class="val" id="rTotal">—</span></div>
+    <div class="result-line big"><span>Итоговая заявленная цена сделки</span><span class="val" id="dFinal">—</span></div>
+    <div class="result-line big"><span>Итоговая сумма кредита</span><span class="val" id="lFinal">—</span></div>
+    <div class="result-line"><span>Первоначальный взнос банку</span><span class="val" id="dpFinal">—</span></div>
+    <div class="result-line"><span>Сумма завышения цены</span><span class="val" id="markupFinal">—</span></div>
+    <div class="result-line"><span>Налог к уплате</span><span class="val" id="taxFinal">—</span></div>
+    <div class="result-line"><span>Требуемый минимальный кредит (справочно)</span><span class="val" id="lReq">—</span></div>
+    <div id="statusBox" class="status-box status-neutral">Введите желаемую сумму кредита выше нуля, чтобы увидеть проверку.</div>
+    <p class="note">Модель: разница между заявленной и реальной ценой (за вычетом налога) возвращается покупателю и покрывает первоначальный взнос сверх собственных средств клиента. Если собственных средств хватает на ПВ (20,1% от реальной цены дома+земли), завышение и налог не применяются — они не могут быть отрицательными.<br>
+    Формула: D = ((1−налог)×Реальная_цена − Собств.средства) / ((1−налог) − ПВ), но не менее реальной цены.</p>
   </div>
 
-  <div class="formula">Если своих денег нет — весь ПВ фиктивный, и налог с завышения тоже нужно зашить в кредит:
-
-<b>(1 − ПВ) × D = R + t × (D − R)
-D = R × (1 − t) / ((1 − ПВ) − t)</b>
-
-Если у клиента есть свои деньги S — они напрямую уменьшают то, что нужно «добыть» через завышение:
-
-<b>(1 − ПВ) × D + S = R + t × (D − R)
-D = (R × (1 − t) − S) / ((1 − ПВ) − t)</b>
-
-Если S больше стандартного ПВ без завышения (R × ПВ) — завышение не нужно вовсе: D = R, кредит = (1 − ПВ) × R, компания ничего не добавляет.
-
-D — итоговая цена сделки, R — реальная цена дома, ПВ — первоначальный взнос банка, t — налог с завышения, S — собственные средства клиента.</div>
-
-  <footer>mikeyushkevich · калькулятор сделки без ПВ</footer>
+  <footer>Калькулятор для внутреннего использования. Все параметры редактируемые.</footer>
 </div>
 
 <script>
-function parseNum(str){
-  if(!str) return NaN;
-  const cleaned = str.replace(/\s/g,'').replace(',', '.').replace('%','');
-  return parseFloat(cleaned);
-}
-function fmtRub(n){
+function fmt(n){
   if(!isFinite(n)) return '—';
   return Math.round(n).toLocaleString('ru-RU') + ' ₽';
 }
-function fmtInputNumber(str){
-  const n = parseNum(str);
-  if(!isFinite(n)) return str;
-  return Math.round(n).toLocaleString('ru-RU');
-}
 
-const realPriceEl = document.getElementById('realPrice');
-const pvEl = document.getElementById('pvPercent');
-const taxEl = document.getElementById('taxPercent');
-const ownFundsEl = document.getElementById('ownFunds');
+function calc(){
+  const Rh = parseFloat(document.getElementById('realHouse').value) || 0;
+  const Rl = parseFloat(document.getElementById('realLand').value) || 0;
+  const pv = (parseFloat(document.getElementById('pv').value) || 0) / 100;
+  const t = (parseFloat(document.getElementById('tax').value) || 0) / 100;
+  const F = parseFloat(document.getElementById('ownFunds').value) || 0;
+  const loanInput = parseFloat(document.getElementById('loanInput').value) || 0;
 
-function calculate(){
-  const R = parseNum(realPriceEl.value);
-  const p = parseNum(pvEl.value) / 100;
-  const t = parseNum(taxEl.value) / 100;
-  const S = parseNum(ownFundsEl.value) || 0;
+  const R = Rh + Rl;
+  const dpMin = pv * R;
+  const enoughOwnFunds = F >= dpMin;
+  const denom = (1 - t) - pv;
 
-  const outDeal = document.getElementById('outDeal');
-  const outLoan = document.getElementById('outLoan');
-  const outMarkup = document.getElementById('outMarkup');
-  const outTax = document.getElementById('outTax');
-  const outFormalPV = document.getElementById('outFormalPV');
-  const outClientUsed = document.getElementById('outClientUsed');
-  const outCompanyAdds = document.getElementById('outCompanyAdds');
-  const outLeftover = document.getElementById('outLeftover');
-  const checkRow = document.getElementById('checkRow');
-
-  const allOut = [outDeal, outLoan, outMarkup, outTax, outFormalPV, outClientUsed, outCompanyAdds, outLeftover];
-  const denom = (1 - p) - t;
-
-  if(!isFinite(R) || !isFinite(p) || !isFinite(t) || R <= 0 || denom <= 0){
-    allOut.forEach(el => el.textContent = '—');
-    checkRow.textContent = denom <= 0
-      ? 'Схема не работает: (1 − ПВ) должно быть больше налога, иначе кредит никогда не покроет завышение.'
-      : '';
-    checkRow.className = 'check bad';
-    return;
-  }
-
-  const standardPV = R * p; // ПВ без завышения, если бы S его полностью хватило
-
-  let D;
-  if(S >= standardPV){
-    D = R; // своих денег достаточно, завышение не требуется
+  let dReq, lReq;
+  if (enoughOwnFunds){
+    dReq = R;
+    lReq = R - F;
+  } else if (denom > 0){
+    dReq = ((1 - t) * R - F) / denom;
+    lReq = (1 - pv) * dReq;
   } else {
-    D = (R * (1 - t) - S) / denom;
+    dReq = NaN; lReq = NaN;
   }
 
-  const loan = D * (1 - p);
-  const markup = D - R;
-  const tax = markup * t;
-  const formalPV = D * p;
-  const clientUsed = Math.min(S, formalPV);
-  const companyAdds = Math.max(formalPV - S, 0);
-  const leftover = Math.max(S - formalPV, 0);
-  const diff = loan + clientUsed - (R + tax);
+  let dFinal, lFinal;
+  if (enoughOwnFunds){
+    dFinal = R;
+  } else if (loanInput === 0){
+    dFinal = dReq;
+  } else {
+    dFinal = loanInput / (1 - pv);
+  }
+  lFinal = (loanInput === 0) ? lReq : loanInput;
 
-  outDeal.textContent = fmtRub(D);
-  outLoan.textContent = fmtRub(loan);
-  outMarkup.textContent = fmtRub(markup);
-  outTax.textContent = fmtRub(tax);
-  outFormalPV.textContent = fmtRub(formalPV);
-  outClientUsed.textContent = fmtRub(clientUsed);
-  outCompanyAdds.textContent = fmtRub(companyAdds);
-  outLeftover.textContent = fmtRub(leftover);
+  const dpFinal = pv * dFinal;
+  const markupFinal = Math.max(dFinal - R, 0);
+  const taxFinal = t * markupFinal;
 
-  checkRow.textContent = 'проверка: кредит + средства клиента − (реальная цена + налог) = ' + fmtRub(diff);
-  checkRow.className = Math.abs(diff) < 1 ? 'check ok' : 'check bad';
+  document.getElementById('rTotal').textContent = fmt(R);
+  document.getElementById('dFinal').textContent = fmt(dFinal);
+  document.getElementById('lFinal').textContent = fmt(lFinal);
+  document.getElementById('dpFinal').textContent = fmt(dpFinal);
+  document.getElementById('markupFinal').textContent = fmt(markupFinal);
+  document.getElementById('taxFinal').textContent = fmt(taxFinal);
+  document.getElementById('lReq').textContent = fmt(lReq);
+
+  const box = document.getElementById('statusBox');
+  if (loanInput === 0){
+    box.className = 'status-box status-neutral';
+    box.textContent = 'Автоматический расчёт: сумма кредита рассчитана исходя из введённых параметров.';
+  } else if (!isFinite(lReq)){
+    box.className = 'status-box status-bad';
+    box.textContent = 'Проверьте параметры: при заданной ставке ПВ и налоге расчёт невозможен.';
+  } else if (loanInput >= lReq){
+    const surplus = loanInput - lReq;
+    box.className = 'status-box status-ok';
+    box.textContent = 'Кредита достаточно. Излишек: ' + fmt(surplus) + '.';
+  } else {
+    const shortage = lReq - loanInput;
+    box.className = 'status-box status-bad';
+    box.textContent = 'Кредита НЕ хватает. Не хватает: ' + fmt(shortage) + '. Нужен кредит от ' + fmt(lReq) + '.';
+  }
 }
 
-[realPriceEl, pvEl, taxEl, ownFundsEl].forEach(el=>{
-  el.addEventListener('input', calculate);
-  el.addEventListener('blur', ()=>{
-    if(el === realPriceEl || el === ownFundsEl){ el.value = fmtInputNumber(el.value); }
-  });
-});
-
-calculate();
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', calc));
+calc();
 </script>
 </body>
 </html>
